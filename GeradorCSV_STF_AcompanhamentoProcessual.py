@@ -52,7 +52,9 @@ for item in lista:
     numerounico  = dsd.extrair(codigofonte,'-rotulo">','</div>')
     numerounico = dsd.extrair(numerounico,': ', '')
     
-    relator = dsd.extrair(codigofonte,'"Relator:','</div>')
+    relator = dsd.extrair(codigofonte,'Relator:','</div>')
+    relator = relator.strip(' ')
+    relator = relator.replace('MIN. ','')
     
     redator_acordao = dsd.extrair(codigofonte,'>Redator do acórdão:','</div>')
     
@@ -66,9 +68,9 @@ for item in lista:
     
     assuntos = dsd.extrair(informacoes, '<ul style="list-style:none;">', '</ul>')
     
-    procedencia = dsd.extrair(informacoes,'<div class="col-md-12 m-t-8 m-b-8">', '<div class="col-md-7 processo-detalhes-bold p-l-0">')
-    
+ 
     protocolo_data = dsd.extrair(informacoes, '<div class="col-md-5 processo-detalhes-bold m-l-0">', '</div>')
+    protocolo_data = protocolo_data.strip(' ')
     
     orgaodeorigem = dsd.extrair(informacoes, '''Órgão de Origem:
                 </div>
@@ -83,6 +85,7 @@ for item in lista:
                 <div class="col-md-5 processo-detalhes">''', '</div>')
                 
     procedencia = dsd.extrair(informacoes, '''<span id="descricao-procedencia">''', '</span>')
+    procedencia = procedencia.replace('  ','')
     
     # extrai campos CC
     if 'ADI' in nome_processo or 'ADPF' in nome_processo or 'ADC' in nome_processo or 'ADO' in nome_processo:
@@ -128,8 +131,8 @@ for item in lista:
         
         ## definição de campo: relator
         relatorcc = dsd.extrair(cc,'Relator:</td><td><strong>','</strong>')
-        relatorcc = relatorcc.replace('MINISTRO','')
-        relatorcc = relatorcc.replace('MINISTRA','')
+        relatorcc = relatorcc.replace('MINISTRO ','')
+        relatorcc = relatorcc.replace('MINISTRA ','')
         
         
         ## definição de campo: distribuição
@@ -209,7 +212,7 @@ for item in lista:
     # criação da variável dados extraídos, com uma lista de dados
     dados = [processo, nome_processo, classecc, numerocc, incidentecc, requerentecc, 
              requerentetipocc, requeridocc, len(lista_das_partes), lista_das_partes ,len(andamentos),
-             andamentos, codigofonte, eletronico_fisico, sigilo, 
+             andamentos, eletronico_fisico, sigilo, 
              numerounico, relatorcc, relator, redator_acordao, 
              relator_ultimo_incidente, assuntos, procedencia, protocolo_data, 
              entradacc, distribuicaocc, orgaodeorigem, 
@@ -219,7 +222,7 @@ for item in lista:
     #inserir aqui o conteúdo da lista acima, trocando [] por ''
     campos = '''processo, nome_processo, classecc, numerocc, incidentecc, requerentecc, 
              requerentetipocc, requeridocc, len(partes),partes,len(andamentos),
-             andamentos, codigofonte, eletronico_fisico, sigilo, 
+             andamentos, eletronico_fisico, sigilo, 
              numerounico, relatorcc, relator, redator_acordao, 
              relator_ultimo_incidente, assuntos, procedencia, protocolo_data, 
              entradacc, distribuicaocc, orgaodeorigem, 
