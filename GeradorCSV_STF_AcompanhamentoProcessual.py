@@ -13,7 +13,7 @@ contador=0
 
 
 
-for item in lista[:500]:
+for item in lista:
     contador = contador +1
     nome_arquivo = path+item
     processo = item.replace('.html','')
