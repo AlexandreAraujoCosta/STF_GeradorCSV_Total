@@ -63,10 +63,10 @@ for item in lista:
     relator = dsd.extrair(codigofonte,'Relator:','</div>')
     relator = relator.strip(' ')
     relator = relator.replace('MIN. ','')
-    dsd.remover_acentos(relator)
+    relator = dsd.remover_acentos(relator)
     
     redator_acordao = dsd.extrair(codigofonte,'>Redator do acórdão:','</div>')
-    dsd.remover_acentos(redator_acordao)
+    redator_acordao = dsd.remover_acentos(redator_acordao)
     redator_acordao = redator_acordao.replace('MIN. ','')
     redator_acordao = redator_acordao.strip(' ')
     redator_acordao = redator_acordao.replace ('MINISTRO ','')
@@ -78,6 +78,7 @@ for item in lista:
     relator_ultimo_incidente = relator_ultimo_incidente.replace ('MIN. ','')
     relator_ultimo_incidente = relator_ultimo_incidente.replace ('MINISTRO ','')
     relator_ultimo_incidente = relator_ultimo_incidente.strip(' ')
+    relator_ultimo_incidente = dsd.remover_acentos(relator_ultimo_incidente)
     ultimoincidente = dsd.extrair(relator_ultimo_incidente,"(",'')
     relator_ultimo_incidente = dsd.extrair(relator_ultimo_incidente,'','(')
     ultimoincidente = ultimoincidente.replace(')','')
@@ -89,7 +90,8 @@ for item in lista:
     assuntos = dsd.extrair(informacoes, '<ul style="list-style:none;">', '</ul>')
     assuntos = dsd.limpar(assuntos)
     assuntos = dsd.extrair(assuntos,'<li>','')
-    assuntos = assuntos.replace('</li>                      ','')
+    assuntos = assuntos.replace('</li>','')
+    assuntos = dsd.limpar(assuntos)
     
  
     protocolo_data = dsd.extrair(informacoes, '<div class="col-md-5 processo-detalhes-bold m-l-0">', '</div>')
@@ -306,8 +308,3 @@ dsd.write_csv_lines('excluidos.txt',lista_excluidos)
     
 print ('Gravados arquivos ADItotal(sem_andamentos).txt e ADItotal(andamentos).txt')
 print (f'Excluídos {excluidos} processos')
-    
-
-dsd.write_csv_lines('ADItotal.txt',dados_csv)
-    
-print ('Gravado arquivo ADItotal.txt')
