@@ -3,22 +3,30 @@ import dsd, os
 path = 'ADItotal\\'
 lista = os.listdir(path)
 
-dsd.limpar_arquivo('ADItotal.txt')
+dsd.limpar_arquivo('ADItotal(sem_andamentos).txt')
+dsd.limpar_arquivo('ADItotal(andamentos).txt')
+dsd.limpar_arquivo('excluidos.txt')
+
 
 partes_total = []
 dados_csv = []
+andamentos_csv = []
+lista_excluidos = []
 dsd.limpar_arquivo('ADItotalpartes.txt')
 dsd.write_csv_header('ADItotalpartes.txt', 'nome, tipo, processo')
 contador=0
+excluidos = 0
 
 
 
 for item in lista:
+    gravar_processo = True
     contador = contador +1
     nome_arquivo = path+item
     processo = item.replace('.html','')
          
     # carrega dados do arquivo
+    html = 'NA'
     html = dsd.carregar_arquivo(nome_arquivo)
     
     html = html.replace(',',';')
@@ -55,23 +63,38 @@ for item in lista:
     relator = dsd.extrair(codigofonte,'Relator:','</div>')
     relator = relator.strip(' ')
     relator = relator.replace('MIN. ','')
+    dsd.remover_acentos(relator)
     
     redator_acordao = dsd.extrair(codigofonte,'>Redator do acórdão:','</div>')
+    dsd.remover_acentos(redator_acordao)
+    redator_acordao = redator_acordao.replace('MIN. ','')
+    redator_acordao = redator_acordao.strip(' ')
+    redator_acordao = redator_acordao.replace ('MINISTRO ','')
+
     
     relator_ultimo_incidente = dsd.extrair(codigofonte,
                                       'Relator do último incidente:'
                                       ,'</div>')
-    
+    relator_ultimo_incidente = relator_ultimo_incidente.replace ('MIN. ','')
+    relator_ultimo_incidente = relator_ultimo_incidente.replace ('MINISTRO ','')
+    relator_ultimo_incidente = relator_ultimo_incidente.strip(' ')
+    ultimoincidente = dsd.extrair(relator_ultimo_incidente,"(",'')
+    relator_ultimo_incidente = dsd.extrair(relator_ultimo_incidente,'','(')
+    ultimoincidente = ultimoincidente.replace(')','')
+    ultimoincidente = ultimoincidente.strip(' ')
     
     #extrai os elementos da aba informações
     informacoes = dsd.extrair(html,'informacoes>>>>', '>>>>')
     
     assuntos = dsd.extrair(informacoes, '<ul style="list-style:none;">', '</ul>')
+    assuntos = dsd.limpar(assuntos)
+    assuntos = dsd.extrair(assuntos,'<li>','')
+    assuntos = assuntos.replace('</li>                      ','')
     
  
     protocolo_data = dsd.extrair(informacoes, '<div class="col-md-5 processo-detalhes-bold m-l-0">', '</div>')
     protocolo_data = protocolo_data.strip(' ')
-    
+        
     orgaodeorigem = dsd.extrair(informacoes, '''Órgão de Origem:
                 </div>
                 <div class="col-md-5 processo-detalhes">''', '</div>')
@@ -86,7 +109,9 @@ for item in lista:
                 
     procedencia = dsd.extrair(informacoes, '''<span id="descricao-procedencia">''', '</span>')
     procedencia = procedencia.replace('  ','')
+    procedencia = dsd.extrair(procedencia, '', ' -')
     
+    cc = 'NA'
     # extrai campos CC
     if 'ADI' in nome_processo or 'ADPF' in nome_processo or 'ADC' in nome_processo or 'ADO' in nome_processo:
         
@@ -98,6 +123,7 @@ for item in lista:
                                  '">')   
         
         # extrai campos classe + liminar + numero
+        cln = 'NA'
         cln = dsd.extrair(cc, 
                           '<div><h3><strong>', 
                           '</strong>')
@@ -105,6 +131,7 @@ for item in lista:
         cln = cln.upper()
         
         # extrai numero
+        numerocc = 'NA'
         numerocc = dsd.extrair (cln, ' - ', '')
         numerocc = dsd.limpar_numero(numerocc)
         
@@ -120,9 +147,13 @@ for item in lista:
         classecc.upper()
         classecc = classecc.replace('ACAO DIRETA DE INCONSTITUCIONALIDADE','ADI')
         classecc = classecc.replace('AÇÃO DIRETA DE INCONSTITUCIONALIDADE','ADI')
+        classecc = classecc.replace('ARGUIÇÃO DE DESCUMPRIMENTO DE PRECEITO FUNDAMENTAL','ADPF')
         
-        # definição de campo: origem     
+        
+        # definição de campo: origem  
+        origemcc = 'NA'
         origemcc = dsd.extrair(cc,'Origem:</td><td><strong>','</strong>')
+        procedencia = procedencia.replace('***', dsd.limpa_estado(origemcc).replace('/', ''))
         
                
         ## definição de campo: entrada
@@ -133,11 +164,13 @@ for item in lista:
         relatorcc = dsd.extrair(cc,'Relator:</td><td><strong>','</strong>')
         relatorcc = relatorcc.replace('MINISTRO ','')
         relatorcc = relatorcc.replace('MINISTRA ','')
+        dsd.remover_acentos(relatorcc)
         
         
         ## definição de campo: distribuição
         distribuicaocc = dsd.extrair(cc,'Distribuído:</td><td><strong>','</strong>')
         distribuicaocc = dsd.substituir_data(distribuicaocc)
+        distribuicaocc = distribuicaocc.replace('-','/')
         
         
         ## definição de campo: requerente
@@ -208,39 +241,71 @@ for item in lista:
             indexacaocc = dsd.limpar(indexacaocc)        
         else:
             indexacaocc = 'NA'
-            
+    
+    else:
+        gravar_processo = False
+ 
+        
+        
     # criação da variável dados extraídos, com uma lista de dados
-    dados = [processo, nome_processo, classecc, numerocc, incidentecc, requerentecc, 
+    dados = [processo, incidentecc, requerentecc, 
              requerentetipocc, requeridocc, len(lista_das_partes), lista_das_partes ,len(andamentos),
-             andamentos, eletronico_fisico, sigilo, 
-             numerounico, relatorcc, relator, redator_acordao, 
+             andamentos[:9], eletronico_fisico, sigilo, 
+             numerounico, relatorcc, relator, redator_acordao, ultimoincidente,
              relator_ultimo_incidente, assuntos, procedencia, protocolo_data, 
-             entradacc, distribuicaocc, orgaodeorigem, 
-             numerodeorigem, origem, origemcc, procedencia,  
+             distribuicaocc, orgaodeorigem, 
+             numerodeorigem, origem,    
              liminarcc, dispositivoquestionadocc, resultadoliminarcc, resultadofinalcc, 
              decisaomonofinalcc, fundamentocc, indexacaocc]
     #inserir aqui o conteúdo da lista acima, trocando [] por ''
-    campos = '''processo, nome_processo, classecc, numerocc, incidentecc, requerentecc, 
+    campos = '''processo, incidentecc, requerentecc, 
              requerentetipocc, requeridocc, len(partes),partes,len(andamentos),
-             andamentos, eletronico_fisico, sigilo, 
-             numerounico, relatorcc, relator, redator_acordao, 
+             andamentos[:9], eletronico_fisico, sigilo, 
+             numerounico, relatorcc, relator, redator_acordao, ultimoincidente,
              relator_ultimo_incidente, assuntos, procedencia, protocolo_data, 
-             entradacc, distribuicaocc, orgaodeorigem, 
-             numerodeorigem, origem, origemcc, procedencia,  
+             distribuicaocc, orgaodeorigem, 
+             numerodeorigem, origem,  
              liminarcc, dispositivoquestionadocc, resultadoliminarcc, resultadofinalcc, 
              decisaomonofinalcc, fundamentocc, indexacaocc'''
     campos = campos.replace('\n','')
     campos = campos.replace('             ','')
     
-    dsd.write_csv_header('ADItotal.txt',campos)
+    dados2 = [processo, len(andamentos), len(str(andamentos)), andamentos]
+    campos2 = 'processo, len(andamentos), len(str(andamentos)), andamentos'
+    
+        
+    dsd.write_csv_header('ADItotal(sem_andamentos).txt',campos)
+    dsd.write_csv_header('excluidos.txt',campos)
+    dsd.write_csv_header('ADItotal(andamentos).txt',campos2)
     
     # grava de 500 em 500
-    dados_csv.append(dados)
-    if (contador)%(500) == 0:
-        dsd.write_csv_lines('ADItotal.txt',dados_csv)
-        dados_csv = []
-        
+    if andamentos == []:
+        andamentos = ['SEM ANDAMENTOS CADASTRADOS']
+    if  (gravar_processo == False or 
+         nome_processo == 'NA' or 
+         len(lista_das_partes) == 0 or
+         'DEVOLUCAO POR IMPOSSIBILIDADE DE PROCESSAMENTO' in andamentos[0] or
+         'REAUTUADO' in andamentos[0] or
+         'CANCELAMENTO DE AUTUACAO' in andamentos[0]):
+        lista_excluidos.append(processo)
+        excluidos = excluidos + 1
+
+    else:
+
+        dados_csv.append(dados)
+        andamentos_csv.append(dados2)
+    
+
     print(nome_processo)
+    
+
+    
+dsd.write_csv_lines('ADItotal(sem_andamentos).txt',dados_csv)
+dsd.write_csv_lines('ADItotal(andamentos).txt',andamentos_csv)
+dsd.write_csv_lines('excluidos.txt',lista_excluidos)
+    
+print ('Gravados arquivos ADItotal(sem_andamentos).txt e ADItotal(andamentos).txt')
+print (f'Excluídos {excluidos} processos')
     
 
 dsd.write_csv_lines('ADItotal.txt',dados_csv)
