@@ -166,7 +166,7 @@ for item in lista:
         relatorcc = dsd.extrair(cc,'Relator:</td><td><strong>','</strong>')
         relatorcc = relatorcc.replace('MINISTRO ','')
         relatorcc = relatorcc.replace('MINISTRA ','')
-        dsd.remover_acentos(relatorcc)
+        relatorcc = dsd.remover_acentos(relatorcc)
         
         
         ## definição de campo: distribuição
